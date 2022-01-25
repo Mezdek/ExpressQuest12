@@ -1,12 +1,19 @@
-const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 const PRIVATE_KEY = "superSecretStringNowoneShouldKnowOrTheyCanGenerateTokens";
 
-const calculateToken = (userEmail = "") => {
-  return crypto
-    .createHash("md5")
-    .update(userEmail + PRIVATE_KEY)
-    .digest("hex");
+const calculateToken = (userEmail = "", userID) => {
+  return jwt.sign({ user_id: userID, email: userEmail }, PRIVATE_KEY);
 };
 
-module.exports = { calculateToken };
+const verifyToken = (token = "") => {
+  return jwt.verify(token, PRIVATE_KEY, (err, decoded) => {
+    if (err) {
+      return Promise.resolve({ error: err });
+    } else {
+      return Promise.resolve(decoded);
+    }
+  });
+};
+
+module.exports = { calculateToken, verifyToken };

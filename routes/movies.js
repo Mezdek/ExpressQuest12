@@ -1,6 +1,7 @@
 const moviesRouter = require("express").Router();
 const Movie = require("../models/movie");
 const User = require("../models/user");
+const { verifyToken } = require("../helpers/users");
 
 moviesRouter.get("/", (req, res) => {
   const { max_duration, color } = req.query;
@@ -9,32 +10,23 @@ moviesRouter.get("/", (req, res) => {
       .status(401)
       .json({ message: "You must be logged in to access this resource" });
   } else {
-    User.findByToken(req.cookies.token).then((user) => {
-      if (user) {
+    verifyToken(req.cookies.token).then((result) => {
+      if (result.error) {
+        res.status(401).json({ message: "Invalid token" });
+      } else {
         Movie.findMany({
           filters: { max_duration, color },
-          user_id: user.id,
+          user_id: result.user_id,
         }).then((movies) => {
-          res.json(movies);
+          if (movies.length === 0) {
+            res.status(404).json({ message: "This user has no movies" });
+          } else {
+            res.json(movies);
+          }
         });
-      } else {
-        res
-          .status(401)
-          .json({ message: "You must be logged in to access this resource" });
       }
     });
   }
-});
-
-moviesRouter.get("/", async (req, res) => {
-  const { max_duration, color } = req.query;
-  Movie.findMany({ filters: { max_duration, color } })
-    .then((movies) => {
-      res.json(movies);
-    })
-    .catch((err) => {
-      res.status(500).send("Error retrieving movies from database");
-    });
 });
 
 moviesRouter.get("/:id", (req, res) => {

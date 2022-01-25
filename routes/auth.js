@@ -10,10 +10,9 @@ authRouter.post("/login", (req, res) => {
       User.verifyPassword(password, user.hashedPassword).then(
         (passwordIsCorrect) => {
           if (passwordIsCorrect) {
-            const token = calculateToken(user.email);
-            User.update(user.id, { token });
+            const token = calculateToken(email, user.id);
             res.cookie("token", token);
-            res.json({message: "You are logged in"});
+            res.json({ message: "You are logged in" });
           } else {
             res.status(401).json({ message: "Credentials are incorrect" });
           }
